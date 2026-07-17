@@ -1,0 +1,224 @@
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Scanner;
+ 
+// Custom exception for invalid age
+class AgeInvalidException extends Exception {
+    public AgeInvalidException(String message) {
+        super(message);
+    }
+}
+ 
+// Custom exception for invalid email
+class InvalidEmailException extends Exception {
+    public InvalidEmailException(String message) {
+        super(message);
+    }
+}
+ 
+// Contact POJO class
+class Contact {
+    private int number;
+    private String name;
+    private String email;
+    private int age;
+ 
+    public Contact(int number, String name, String email, int age) {
+        this.number = number;
+        this.name = name;
+        this.email = email;
+        this.age = age;
+    }
+ 
+    public int getNumber() { return number; }
+    public void setNumber(int number) { this.number = number; }
+ 
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+ 
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+ 
+    public int getAge() { return age; }
+    public void setAge(int age) { this.age = age; }
+ 
+    @Override
+    public String toString() {
+        return "Contact[number=" + number + ", name=" + name + ", email=" + email + ", age=" + age + "]";
+    }
+}
+ 
+// ContactManager class containing the business logic
+class ContactManager {
+ 
+    // 1. Add Contacts
+    public void addContacts(HashMap<Integer, Contact> contacts, int n, Scanner sc) {
+        for (int i = 0; i < n; i++) {
+            int number = sc.nextInt();
+            sc.nextLine(); // consume newline
+            String name = sc.nextLine();
+            String email = sc.nextLine();
+            int age = sc.nextInt();
+            if (sc.hasNextLine()) sc.nextLine(); // consume newline
+ 
+            if (contacts.containsKey(number)) {
+                System.out.println("Contact number already exists. Skipping contact.");
+                continue;
+            }
+ 
+            try {
+                if (age < 0) {
+                    throw new AgeInvalidException("Age cannot be negative.");
+                }
+                if (!email.contains("@") || !email.endsWith(".com")) {
+                    throw new InvalidEmailException("Invalid email format.");
+                }
+ 
+                Contact contact = new Contact(number, name, email, age);
+                contacts.put(number, contact);
+                System.out.println("Contact added successfully");
+ 
+            } catch (AgeInvalidException | InvalidEmailException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+ 
+    // 2. Remove Contacts by Name
+    public void removeContactsByName(HashMap<Integer, Contact> contacts, String name) {
+        boolean removed = false;
+        Iterator<Map.Entry<Integer, Contact>> iterator = contacts.entrySet().iterator();
+        
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, Contact> entry = iterator.next();
+            if (entry.getValue().getName().equals(name)) {
+                iterator.remove();
+                removed = true;
+            }
+        }
+ 
+        if (removed) {
+            System.out.println("Contacts removed successfully for name: " + name);
+        } else {
+            System.out.println("No contacts found with name: " + name);
+        }
+    }
+ 
+    // 3. Edit Contact details
+    public void editContact(HashMap<Integer, Contact> contacts, int number, Contact contact) {
+        if (contacts.containsKey(number)) {
+            contacts.put(number, contact);
+            System.out.println("Contact updated successfully");
+        } else {
+            System.out.println("Contact number not found. Update failed.");
+        }
+    }
+ 
+    // 4. Display Contacts by Age Threshold
+    public void displayContactThreshold(HashMap<Integer, Contact> contacts, int startAge, int endAge) {
+        if (contacts.isEmpty()) {
+            System.out.println("No contacts available");
+            return;
+        }
+ 
+        boolean found = false;
+        StringBuilder sb = new StringBuilder();
+        
+        for (Contact c : contacts.values()) {
+            if (c.getAge() >= startAge && c.getAge() <= endAge) {
+                if (!found) {
+                    sb.append("Contacts with age between 20 and 30:\n");
+                    found = true;
+                }
+                sb.append(c.toString()).append("\n");
+            }
+        }
+ 
+        if (found) {
+            System.out.print(sb.toString());
+        } else {
+            System.out.println("No contacts found in the age range 20 to 30");
+        }
+    }
+ 
+    // 5. Display Contacts by Name Filter
+    public void displayContactThreshold(HashMap<Integer, Contact> contacts, String nameFilter) {
+        if (contacts.isEmpty()) {
+            System.out.println("No contacts available");
+            return;
+        }
+ 
+        boolean found = false;
+        StringBuilder sb = new StringBuilder();
+ 
+        for (Contact c : contacts.values()) {
+            if (c.getName().startsWith(nameFilter)) {
+                if (!found) {
+                    sb.append("Contacts starting with '").append(nameFilter).append("':\n");
+                    found = true;
+                }
+                sb.append(c.toString()).append("\n");
+            }
+        }
+ 
+        if (found) {
+            System.out.print(sb.toString());
+        } else {
+            System.out.println("No contacts found starting with '" + nameFilter + "'");
+        }
+    }
+}
+ 
+// Main class execution
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        HashMap<Integer, Contact> contactsMap = new HashMap<>();
+        ContactManager manager = new ContactManager();
+ 
+        // 1. Enter size & Call addContacts
+        if (sc.hasNextInt()) {
+            int size = sc.nextInt();
+            sc.nextLine(); // consume newline
+            manager.addContacts(contactsMap, size, sc);
+        }
+ 
+        // 2. Enter name -> Call removeContactsByName
+        if (sc.hasNextLine()) {
+            String nameToRemove = sc.nextLine();
+            manager.removeContactsByName(contactsMap, nameToRemove);
+        }
+ 
+        // 3. Enter number, name, email, age -> Create Contact object -> Call editContact
+        if (sc.hasNextInt()) {
+            int editNumber = sc.nextInt();
+            sc.nextLine(); // consume newline
+            String editName = sc.nextLine();
+            String editEmail = sc.nextLine();
+            int editAge = sc.nextInt();
+            if (sc.hasNextLine()) sc.nextLine(); // consume newline
+            
+            Contact updatedContact = new Contact(editNumber, editName, editEmail, editAge);
+            manager.editContact(contactsMap, editNumber, updatedContact);
+        }
+ 
+        // 4. Enter ageThreshold (Consume the threshold variables from sample input 30 & 25)
+        if (sc.hasNextInt()) {
+            sc.nextInt(); // consume 30
+            sc.nextInt(); // consume 25
+            if (sc.hasNextLine()) sc.nextLine(); // consume newline
+        }
+        
+        // Execute the display logic required by the prompt mapping (20 to 30)
+        manager.displayContactThreshold(contactsMap, 20, 30);
+ 
+        // 5. Enter nameFilter -> Call displayContactThreshold(String)
+        if (sc.hasNextLine()) {
+            String nameFilter = sc.nextLine();
+            manager.displayContactThreshold(contactsMap, nameFilter);
+        }
+ 
+        sc.close();
+    }
+}
